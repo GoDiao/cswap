@@ -27,7 +27,7 @@ cswap solves this by creating **per-session provider isolation** — each `cswap
 ## Install
 
 ```bash
-npm install -g cswap
+npm install -g @godiao/cswap
 ```
 
 ## Quick Start

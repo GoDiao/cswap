@@ -620,7 +620,7 @@ footer p {
     <h2 class="reveal" data-en="Install cswap" data-zh="安装 cswap">Install cswap</h2>
     <div class="reveal">
       <div class="install-cmd" onclick="copyInstall(this)">
-        <span class="dollar">$</span>npm install -g cswap
+        <span class="dollar">$</span>npm install -g @godiao/cswap
         <span class="copied" data-en="copied" data-zh="已复制">copied</span>
       </div>
     </div>
@@ -726,7 +726,7 @@ document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
 
 // ── Copy ──
 function copyInstall(el) {
-  navigator.clipboard.writeText('npm install -g cswap').then(() => {
+  navigator.clipboard.writeText('npm install -g @godiao/cswap').then(() => {
     const c = el.querySelector('.copied');
     c.style.opacity = '1';
     setTimeout(() => { c.style.opacity = '0'; }, 2000);
