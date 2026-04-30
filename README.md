@@ -54,16 +54,16 @@ cswap
 Shows a numbered list of providers. Type a number or name to select:
 
 ```
-  Select a provider:
+  cswap  ─  Claude Code Provider Switcher
 
-  1. df
-  2. Claude Official
-  3. DeepSeek
-  4. OpenRouter
+  ┌──────────────────────────┐
+  │  1  df                4 vars  │
+  │  2  Claude Official   3 vars  │
+  │  3  DeepSeek          4 vars  │
+  │  +  Quick add                 │
+  └──────────────────────────┘
 
-  Type number or name, "q" to quit
-
-  > 1
+  Type number or name to select  ·  + to add  ·  q to quit
 ```
 
 ### Direct Mode
@@ -140,7 +140,7 @@ cswap --clear
 
 1. Reads providers from CC Switch database and/or `~/.cswap.json`
 2. Shows interactive selection (or uses `--provider` flag)
-3. Creates an isolated settings file at `~/.cswap-{name}.settings.json`
+3. Creates an isolated settings file at `~/.claude/ccsc-<provider-slug>-<hash>.settings.json`
 4. Spawns `claude --settings=<file>` with your chosen provider
 5. cswap exits — Claude runs independently
 

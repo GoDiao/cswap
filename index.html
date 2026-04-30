@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>cswap — Claude Code Provider Switcher</title>
+<meta name="description" content="Launch Claude Code with isolated provider-specific settings. Switch providers per terminal tab without touching your global config.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -14,6 +15,9 @@
   --bg-warm: #EDE9E0;
   --bg-card: #FAF9F6;
   --bg-code: #2C2A26;
+  --paper-hi: rgba(255, 255, 255, 0.56);
+  --shadow-soft: 0 18px 70px rgba(65, 51, 38, 0.10);
+  --shadow-tight: 0 10px 30px rgba(65, 51, 38, 0.08);
   --border: #D6D2C9;
   --border-light: #E8E5DD;
   --text: #4A4640;
@@ -30,12 +34,28 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(193, 95, 60, 0.10), transparent 28%),
+    radial-gradient(circle at 82% 4%, rgba(90, 140, 90, 0.09), transparent 24%),
+    linear-gradient(180deg, #F8F4EC 0%, var(--bg) 42%, #EFE9DC 100%);
   color: var(--text);
   font-family: 'Inter', -apple-system, system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.36;
+  background-image:
+    linear-gradient(rgba(44, 42, 38, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(44, 42, 38, 0.018) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
 }
 
 ::selection {
@@ -58,7 +78,7 @@ nav {
   align-items: center;
   justify-content: space-between;
   padding: 0 48px;
-  background: rgba(244, 241, 234, 0.92);
+  background: rgba(248, 244, 236, 0.80);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-light);
 }
@@ -71,6 +91,19 @@ nav {
   font-weight: 600;
   color: var(--text-heading);
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.nav-logo::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, var(--text-heading) 0 48%, transparent 48% 56%, var(--accent) 56% 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 4px 12px rgba(44,42,38,0.12);
 }
 
 .nav-links { display: flex; gap: 20px; }
@@ -108,7 +141,7 @@ nav {
   color: var(--text);
   text-decoration: none;
   transition: all 0.15s;
-  background: var(--bg-card);
+  background: rgba(250, 249, 246, 0.86);
 }
 .btn-github:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -116,9 +149,10 @@ nav {
 .hero {
   padding: 160px 0 60px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 0.92fr) minmax(440px, 1.08fr);
   gap: 64px;
   align-items: center;
+  position: relative;
 }
 
 .hero-text { max-width: 480px; }
@@ -127,10 +161,15 @@ nav {
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--accent);
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 20px;
+  display: inline-flex;
+  padding: 6px 10px;
+  border: 1px solid rgba(193, 95, 60, 0.18);
+  border-radius: 999px;
+  background: rgba(250, 249, 246, 0.58);
 }
 
 .hero-text h1 {
@@ -141,6 +180,7 @@ nav {
   letter-spacing: -1px;
   line-height: 1.12;
   margin-bottom: 18px;
+  text-wrap: balance;
 }
 
 .hero-text p {
@@ -148,6 +188,7 @@ nav {
   color: var(--text-secondary);
   line-height: 1.7;
   margin-bottom: 32px;
+  text-wrap: pretty;
 }
 
 .hero-actions { display: flex; gap: 12px; align-items: center; }
@@ -164,7 +205,7 @@ nav {
   transition: all 0.15s;
   text-decoration: none;
 }
-.btn-primary:hover { background: #3d3b36; }
+.btn-primary:hover { background: #3d3b36; transform: translateY(-1px); }
 
 .btn-secondary {
   font-size: 14px;
@@ -186,11 +227,24 @@ nav {
   margin-top: 40px;
 }
 
+.hero-terminal::before {
+  content: '';
+  position: absolute;
+  inset: -28px -24px auto auto;
+  width: 190px;
+  height: 190px;
+  border-radius: 999px;
+  background: rgba(193, 95, 60, 0.12);
+  filter: blur(28px);
+  z-index: -1;
+}
+
 .terminal {
   background: var(--bg-code);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-soft), 0 0 0 1px rgba(0,0,0,0.05);
+  transform: rotate(-0.8deg);
 }
 
 .terminal-chrome {
@@ -268,10 +322,15 @@ nav {
   border: none;
   border-top: 1px solid var(--border-light);
   margin: 0;
+  opacity: 0.8;
 }
 
 /* ── Features: editorial asymmetric blocks ── */
 .features-section { padding: 100px 0 80px; }
+
+.features-section,
+.how-section,
+.install-section { position: relative; }
 
 .features-title {
   font-family: 'Source Serif 4', Georgia, serif;
@@ -280,6 +339,7 @@ nav {
   color: var(--text-heading);
   letter-spacing: -0.8px;
   margin-bottom: 12px;
+  text-wrap: balance;
 }
 
 .features-subtitle {
@@ -297,13 +357,18 @@ nav {
 }
 
 .feature-block {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(255,255,255,0.54), rgba(250,249,246,0.86));
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 36px 32px;
-  transition: background 0.2s;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.62) inset;
 }
-.feature-block:hover { background: #f7f5f0; }
+.feature-block:hover {
+  transform: translateY(-3px);
+  border-color: rgba(193, 95, 60, 0.22);
+  box-shadow: var(--shadow-tight), 0 1px 0 rgba(255,255,255,0.72) inset;
+}
 
 .feature-block.big {
   grid-row: span 2;
@@ -315,7 +380,7 @@ nav {
 .feature-num {
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--accent);
   margin-bottom: 16px;
   letter-spacing: 1px;
 }
@@ -334,6 +399,7 @@ nav {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.6;
+  text-wrap: pretty;
 }
 
 .feature-block.big p { font-size: 15px; }
@@ -375,7 +441,7 @@ nav {
   font-family: 'Source Serif 4', Georgia, serif;
   font-size: 48px;
   font-weight: 700;
-  color: var(--border);
+  color: rgba(193, 95, 60, 0.24);
   line-height: 1;
   margin-bottom: 16px;
   letter-spacing: -2px;
@@ -415,16 +481,16 @@ nav {
   font-size: 15px;
   font-weight: 500;
   color: var(--text-heading);
-  background: var(--bg-card);
+  background: rgba(250, 249, 246, 0.92);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 14px 28px;
   display: inline-block;
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
 }
-.install-cmd:hover { border-color: var(--accent); }
+.install-cmd:hover { border-color: var(--accent); box-shadow: var(--shadow-tight); transform: translateY(-1px); }
 .install-cmd .dollar { color: var(--text-secondary); margin-right: 8px; }
 .install-cmd .copied {
   position: absolute;
@@ -459,6 +525,8 @@ footer p {
   font-size: 12px;
   color: var(--text-secondary);
 }
+footer a { color: inherit; text-decoration: none; }
+footer a:hover { color: var(--accent); }
 
 /* ── Animations ── */
 .reveal {
@@ -480,6 +548,7 @@ footer p {
     gap: 40px;
   }
   .hero-terminal { margin-top: 0; }
+  .terminal { transform: none; }
   .features-magazine,
   .features-magazine-alt {
     grid-template-columns: 1fr;
@@ -493,6 +562,9 @@ footer p {
 
 @media (max-width: 480px) {
   .hero-text h1 { font-size: 32px; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .btn-primary, .btn-secondary { text-align: center; }
+  .terminal-body { font-size: 12px; padding: 18px; min-height: 330px; }
 }
 </style>
 </head>
@@ -509,19 +581,19 @@ footer p {
   </div>
   <div class="nav-right">
     <button class="lang-btn" onclick="toggleLang()" id="lang-btn">中文</button>
-    <a href="https://github.com" class="btn-github">GitHub ↗</a>
+    <a href="https://github.com/GoDiao/cswap" class="btn-github">GitHub ↗</a>
   </div>
 </nav>
 
 <!-- ── Hero: text left, terminal right ── -->
 <section class="hero page">
   <div class="hero-text">
-    <div class="hero-label reveal">v1.0.0 — open source</div>
+    <div class="hero-label reveal">v1.0.0 — open source CLI</div>
     <h1 class="reveal" data-en="Every tab,<br>its own provider" data-zh="每个标签页，<br>独立的服务商">Every tab,<br>its own provider</h1>
     <p class="reveal" data-en="Launch Claude Code with a chosen provider. Each session is isolated — your global settings stay untouched." data-zh="用选定的服务商启动 Claude Code。每次会话独立隔离 — 全局配置不受影响。">Launch Claude Code with a chosen provider. Each session is isolated — your global settings stay untouched.</p>
     <div class="hero-actions reveal">
       <a href="#install" class="btn-primary" data-en="Get started" data-zh="快速开始">Get started</a>
-      <a href="#features" class="btn-secondary" data-en="See features" data-zh="查看功能">See features</a>
+      <a href="https://github.com/GoDiao/cswap" class="btn-secondary" data-en="View source" data-zh="查看源码">View source</a>
     </div>
   </div>
   <div class="hero-terminal reveal">
@@ -630,7 +702,7 @@ footer p {
 
 <footer>
   <div class="page">
-    <p>MIT License</p>
+    <p><a href="https://github.com/GoDiao/cswap">GitHub</a> · MIT License · @godiao/cswap</p>
   </div>
 </footer>
 

@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Cross-platform CLI for switching Claude Code providers — supports CC Switch database and standalone config",
   "type": "module",
+  "homepage": "https://github.com/GoDiao/cswap#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoDiao/cswap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GoDiao/cswap/issues"
+  },
   "bin": {
     "cswap": "dist/index.js"
   },
@@ -29,7 +37,7 @@
     "llm",
     "multi-provider"
   ],
-  "author": "",
+  "author": "GoDiao",
   "license": "MIT",
   "dependencies": {
     "commander": "^13.1.0",
