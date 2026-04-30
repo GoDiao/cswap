@@ -1,5 +1,5 @@
 {
-  "name": "cswap",
+  "name": "@godiao/cswap",
   "version": "1.0.0",
   "description": "Cross-platform CLI for switching Claude Code providers — supports CC Switch database and standalone config",
   "type": "module",
