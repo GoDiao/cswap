@@ -25,11 +25,13 @@ export async function loadConfig(): Promise<CswapConfig> {
   if (!existsSync(CONFIG_PATH)) {
     return emptyConfig();
   }
+
+  const content = await readFile(CONFIG_PATH, 'utf-8');
   try {
-    const content = await readFile(CONFIG_PATH, 'utf-8');
     return JSON.parse(content);
-  } catch {
-    return emptyConfig();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid cswap config at ${CONFIG_PATH}: ${message}`);
   }
 }
 

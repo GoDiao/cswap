@@ -12,7 +12,7 @@ import {
   loadConfig,
   getConfigPath,
 } from './config.js';
-import { selectProvider, readQuickAddResult } from './ui/selector.js';
+import { selectProvider } from './ui/selector.js';
 import type { Provider } from './types.js';
 
 const program = new Command();
@@ -124,6 +124,13 @@ program
       config.providers.map((p) => p.name.toLowerCase())
     );
 
+    if (providers.length === 0) {
+      console.log('No providers found.');
+      console.log('Add a provider: cswap add <name> --env ANTHROPIC_API_KEY=xxx');
+      console.log('Or install CC Switch and import: cswap import');
+      process.exit(0);
+    }
+
     // CJK-aware string width
     const strWidth = (s: string): number => {
       let w = 0;
@@ -221,26 +228,10 @@ async function main(
   } else {
     const history = await loadHistory();
     const sortedProviders = sortByHistory(providers, history);
-    const result = selectProvider(sortedProviders);
+    selectedProvider = selectProvider(sortedProviders);
 
-    if (result === null) {
-      // User chose quick-add (+)
-      const quickAdd = readQuickAddResult();
-      if (!quickAdd) {
-        process.exit(1);
-      }
-      // Save to cswap config
-      await addProvider(quickAdd.name, quickAdd.env);
-      // Create a Provider object for immediate use
-      selectedProvider = {
-        id: 99999,
-        name: quickAdd.name,
-        displayName: quickAdd.name,
-        envVars: { ...quickAdd.env },
-        settingsConfig: { env: { ...quickAdd.env } },
-      };
-    } else {
-      selectedProvider = result;
+    if (selectedProvider.id === 99999) {
+      await addProvider(selectedProvider.name, selectedProvider.envVars);
     }
   }
 

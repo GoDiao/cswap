@@ -1,5 +1,5 @@
 import { spawnSync } from 'child_process';
-import { writeFileSync, readFileSync, unlinkSync, mkdtempSync } from 'fs';
+import { writeFileSync, readFileSync, unlinkSync, mkdtempSync, rmdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import type { Provider } from '../types.js';
@@ -9,7 +9,7 @@ import type { Provider } from '../types.js';
  * Runs the selection UI in a child process so the main process
  * never touches stdin, keeping it clean for the subsequent Claude spawn.
  */
-export function selectProvider(providers: Provider[]): Provider | null {
+export function selectProvider(providers: Provider[]): Provider {
   const tmpDir = mkdtempSync(join(tmpdir(), 'cswap-'));
   const dataFile = join(tmpDir, 'providers.json');
   const resultFile = join(tmpDir, 'result.json');
@@ -226,8 +226,14 @@ export function selectProvider(providers: Provider[]): Provider | null {
     const resultData = JSON.parse(readFileSync(resultFile, 'utf-8'));
 
     if (resultData.type === 'new') {
-      // Return a special marker so index.ts can handle the quick-add
-      return null;
+      const provider = resultData.provider as { name: string; env: Record<string, string> };
+      return {
+        id: 99999,
+        name: provider.name,
+        displayName: provider.name,
+        envVars: { ...provider.env },
+        settingsConfig: { env: { ...provider.env } },
+      };
     }
 
     return providers[resultData.index];
@@ -236,40 +242,9 @@ export function selectProvider(providers: Provider[]): Provider | null {
       unlinkSync(scriptFile);
       unlinkSync(dataFile);
       unlinkSync(resultFile);
-      require('fs').rmdirSync(tmpDir);
+      rmdirSync(tmpDir);
     } catch {
       // ignore
     }
   }
-}
-
-/**
- * Read the quick-add result from the temp file (if user chose +)
- */
-export function readQuickAddResult(): { name: string; env: Record<string, string> } | null {
-  // We need to find the most recent cswap temp dir
-  const tmpBase = tmpdir();
-  const fs = require('fs');
-  const dirs = fs.readdirSync(tmpBase)
-    .filter((d: string) => d.startsWith('cswap-'))
-    .map((d: string) => ({
-      name: d,
-      time: fs.statSync(join(tmpBase, d)).mtimeMs,
-    }))
-    .sort((a: { time: number }, b: { time: number }) => b.time - a.time);
-
-  if (dirs.length === 0) return null;
-
-  const resultFile = join(tmpBase, dirs[0].name, 'result.json');
-  if (!fs.existsSync(resultFile)) return null;
-
-  try {
-    const data = JSON.parse(fs.readFileSync(resultFile, 'utf-8'));
-    if (data.type === 'new' && data.provider) {
-      return data.provider;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
 }

@@ -2,6 +2,7 @@ import { copyFile, readFile, writeFile, mkdir, unlink, readdir } from 'fs/promis
 import { existsSync } from 'fs';
 import path from 'path';
 import os from 'os';
+import { createHash } from 'crypto';
 import { getCommonConfig } from './db.js';
 
 const CLAUDE_DIR = path.join(os.homedir(), '.claude');
@@ -76,12 +77,16 @@ function nameToSlug(name: string): string {
     .replace(/^_|_$/g, '');          // Trim leading/trailing underscores
 }
 
+function nameHash(name: string): string {
+  return createHash('sha256').update(name).digest('hex').slice(0, 8);
+}
+
 /**
  * Get the CCSC settings file path for a specific provider
  */
 function getProviderSettingsPath(providerName: string): string {
-  const slug = nameToSlug(providerName);
-  return path.join(CLAUDE_DIR, `ccsc-${slug}.settings.json`);
+  const slug = nameToSlug(providerName) || 'provider';
+  return path.join(CLAUDE_DIR, `ccsc-${slug}-${nameHash(providerName)}.settings.json`);
 }
 
 /**

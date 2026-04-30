@@ -18,12 +18,15 @@ export async function loadHistory(): Promise<HistoryEntry[]> {
     const content = await readFile(HISTORY_FILE, 'utf-8');
     const lines = content.trim().split('\n').filter(Boolean);
 
-    return lines.map((line) => {
-      const [timestampStr, name] = line.split('\t');
-      return {
-        name,
-        timestamp: parseInt(timestampStr, 10),
-      };
+    return lines.flatMap((line) => {
+      const tabIndex = line.indexOf('\t');
+      if (tabIndex < 0) return [];
+
+      const timestamp = parseInt(line.slice(0, tabIndex), 10);
+      const name = line.slice(tabIndex + 1).trim();
+      if (!Number.isFinite(timestamp) || !name) return [];
+
+      return [{ name, timestamp }];
     });
   } catch {
     return [];

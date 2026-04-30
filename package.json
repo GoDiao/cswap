@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build"
   },
