@@ -1,0 +1,49 @@
+{
+  "name": "cswap",
+  "version": "1.0.0",
+  "description": "Cross-platform CLI for switching Claude Code providers — supports CC Switch database and standalone config",
+  "type": "module",
+  "bin": {
+    "cswap": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cswap",
+    "claude",
+    "claude-code",
+    "claude-switch",
+    "provider",
+    "cli",
+    "anthropic",
+    "ai",
+    "llm",
+    "multi-provider"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^13.1.0",
+    "node-sqlite3-wasm": "^0.8.56"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}

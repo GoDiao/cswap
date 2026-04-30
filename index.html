@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cswap — Claude Code Provider Switcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #F4F1EA;
+  --bg-warm: #EDE9E0;
+  --bg-card: #FAF9F6;
+  --bg-code: #2C2A26;
+  --border: #D6D2C9;
+  --border-light: #E8E5DD;
+  --text: #4A4640;
+  --text-secondary: #8A857C;
+  --text-heading: #2C2A26;
+  --accent: #C15F3C;
+  --accent-hover: #A84E30;
+  --green: #5A8C5A;
+  --yellow: #B8963A;
+  --terminal-text: #D4D0C8;
+  --terminal-dim: #7A766E;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(193, 95, 60, 0.15);
+  color: var(--text-heading);
+}
+
+/* ── Layout ── */
+.page { max-width: 1120px; margin: 0 auto; padding: 0 48px; }
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  background: rgba(244, 241, 234, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.nav-left { display: flex; align-items: center; gap: 28px; }
+
+.nav-logo {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-heading);
+  text-decoration: none;
+}
+
+.nav-links { display: flex; gap: 20px; }
+.nav-links a {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--text-heading); }
+
+.nav-right { display: flex; align-items: center; gap: 12px; }
+
+.lang-btn {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-github {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  transition: all 0.15s;
+  background: var(--bg-card);
+}
+.btn-github:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Hero: asymmetric, text left + terminal floating right ── */
+.hero {
+  padding: 160px 0 60px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.hero-text { max-width: 480px; }
+
+.hero-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.hero-text h1 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: clamp(36px, 4.5vw, 52px);
+  font-weight: 700;
+  color: var(--text-heading);
+  letter-spacing: -1px;
+  line-height: 1.12;
+  margin-bottom: 18px;
+}
+
+.hero-text p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.hero-actions { display: flex; gap: 12px; align-items: center; }
+
+.btn-primary {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 22px;
+  background: var(--text-heading);
+  color: var(--bg);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.btn-primary:hover { background: #3d3b36; }
+
+.btn-secondary {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 22px;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Terminal in hero — floats right, slightly overlaps */
+.hero-terminal {
+  position: relative;
+  margin-top: 40px;
+}
+
+.terminal {
+  background: var(--bg-code);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.terminal-chrome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.terminal-dots { display: flex; gap: 6px; }
+.terminal-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+
+.terminal-title {
+  flex: 1;
+  text-align: center;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+}
+
+.terminal-body {
+  padding: 20px 24px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 360px;
+  color: var(--terminal-text);
+}
+
+.tl { margin-bottom: 1px; }
+.tl.empty { height: 1.7em; }
+
+.t-accent { color: #E8A87C; font-weight: 500; }
+.t-dim { color: var(--terminal-dim); }
+.t-num { color: var(--green); font-weight: 500; font-variant-numeric: tabular-nums; }
+.t-name { color: #E8E4DC; font-weight: 500; }
+.t-vars { color: var(--terminal-dim); font-variant-numeric: tabular-nums; }
+.t-check { color: var(--green); }
+.t-yellow { color: var(--yellow); font-weight: 500; }
+.t-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  background: var(--terminal-text);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 1px;
+  border-radius: 1px;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.provider-grid {
+  display: inline-grid;
+  grid-template-columns: 2ch 1fr auto;
+  gap: 0 1.5ch;
+}
+
+.provider-box {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 0;
+  margin: 6px 0;
+  display: inline-block;
+}
+.provider-box .tl { padding: 2px 2ch; }
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-light);
+  margin: 0;
+}
+
+/* ── Features: editorial asymmetric blocks ── */
+.features-section { padding: 100px 0 80px; }
+
+.features-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-heading);
+  letter-spacing: -0.8px;
+  margin-bottom: 12px;
+}
+
+.features-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 56px;
+}
+
+/* Magazine layout: big left + two stacked right, then reverse */
+.features-magazine {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
+}
+
+.feature-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 36px 32px;
+  transition: background 0.2s;
+}
+.feature-block:hover { background: #f7f5f0; }
+
+.feature-block.big {
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.feature-num {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.feature-block h3 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-bottom: 8px;
+}
+
+.feature-block.big h3 { font-size: 22px; }
+
+.feature-block p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.feature-block.big p { font-size: 15px; }
+
+/* Second row: two stacked left + big right */
+.features-magazine-alt {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.features-magazine-alt .feature-block.big {
+  grid-row: span 2;
+}
+
+/* ── How: editorial numbers ── */
+.how-section {
+  padding: 100px 0;
+}
+
+.how-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-heading);
+  letter-spacing: -0.8px;
+  margin-bottom: 56px;
+}
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+}
+
+.how-step-num {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--border);
+  line-height: 1;
+  margin-bottom: 16px;
+  letter-spacing: -2px;
+}
+
+.how-step h3 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-bottom: 8px;
+}
+
+.how-step p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* ── Install: minimal inline ── */
+.install-section {
+  padding: 80px 0 100px;
+  text-align: center;
+}
+
+.install-section h2 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-heading);
+  letter-spacing: -0.5px;
+  margin-bottom: 24px;
+}
+
+.install-cmd {
+  font-family: 'Geist Mono', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-heading);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 28px;
+  display: inline-block;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.install-cmd:hover { border-color: var(--accent); }
+.install-cmd .dollar { color: var(--text-secondary); margin-right: 8px; }
+.install-cmd .copied {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--green);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.install-note {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.install-note a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Footer ── */
+footer {
+  padding: 28px 0;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+}
+footer p {
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── Animations ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .hero-terminal { margin-top: 0; }
+  .features-magazine,
+  .features-magazine-alt {
+    grid-template-columns: 1fr;
+  }
+  .feature-block.big { grid-row: span 1; }
+  .how-steps { grid-template-columns: 1fr; gap: 32px; }
+  .nav-links { display: none; }
+  .page { padding: 0 24px; }
+  nav { padding: 0 24px; }
+}
+
+@media (max-width: 480px) {
+  .hero-text h1 { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#" class="nav-logo">cswap</a>
+    <div class="nav-links">
+      <a href="#features" data-en="Features" data-zh="功能">Features</a>
+      <a href="#how" data-en="How it works" data-zh="工作原理">How it works</a>
+      <a href="#install" data-en="Install" data-zh="安装">Install</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="lang-btn" onclick="toggleLang()" id="lang-btn">中文</button>
+    <a href="https://github.com" class="btn-github">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- ── Hero: text left, terminal right ── -->
+<section class="hero page">
+  <div class="hero-text">
+    <div class="hero-label reveal">v1.0.0 — open source</div>
+    <h1 class="reveal" data-en="Every tab,<br>its own provider" data-zh="每个标签页，<br>独立的服务商">Every tab,<br>its own provider</h1>
+    <p class="reveal" data-en="Launch Claude Code with a chosen provider. Each session is isolated — your global settings stay untouched." data-zh="用选定的服务商启动 Claude Code。每次会话独立隔离 — 全局配置不受影响。">Launch Claude Code with a chosen provider. Each session is isolated — your global settings stay untouched.</p>
+    <div class="hero-actions reveal">
+      <a href="#install" class="btn-primary" data-en="Get started" data-zh="快速开始">Get started</a>
+      <a href="#features" class="btn-secondary" data-en="See features" data-zh="查看功能">See features</a>
+    </div>
+  </div>
+  <div class="hero-terminal reveal">
+    <div class="terminal" id="terminal">
+      <div class="terminal-chrome">
+        <div class="terminal-dots"><span></span><span></span><span></span></div>
+        <div class="terminal-title">Terminal</div>
+        <div style="width:42px"></div>
+      </div>
+      <div class="terminal-body" id="terminal-body"></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider page">
+
+<!-- ── Features: magazine blocks ── -->
+<section class="features-section" id="features">
+  <div class="page">
+    <h2 class="features-title reveal" data-en="What it does" data-zh="功能特性">What it does</h2>
+    <p class="features-subtitle reveal" data-en="Simple workflow, clean isolation." data-zh="简洁的工作流，干净的隔离。">Simple workflow, clean isolation.</p>
+
+    <div class="features-magazine">
+      <div class="feature-block big reveal">
+        <div>
+          <div class="feature-num">01</div>
+          <h3 data-en="Session isolation" data-zh="会话隔离">Session isolation</h3>
+          <p data-en="Each run creates its own settings file. Different tabs can use different providers without affecting each other or your global config." data-zh="每次运行创建独立的配置文件。不同标签页可以使用不同服务商，互不影响全局配置。">Each run creates its own settings file. Different tabs can use different providers without affecting each other or your global config.</p>
+        </div>
+      </div>
+      <div class="feature-block reveal reveal-delay-1">
+        <div class="feature-num">02</div>
+        <h3 data-en="Quick add" data-zh="快速添加">Quick add</h3>
+        <p data-en="Configure a new provider right from the selection UI. Name, URL, key, models — saved to ~/.cswap.json." data-zh="在选择界面直接配置新服务商。名称、URL、密钥、模型 — 保存到 ~/.cswap.json。">Configure a new provider right from the selection UI. Name, URL, key, models — saved to ~/.cswap.json.</p>
+      </div>
+      <div class="feature-block reveal reveal-delay-2">
+        <div class="feature-num">03</div>
+        <h3 data-en="Pass-through" data-zh="参数透传">Pass-through</h3>
+        <p data-en="All flags go straight to Claude Code. --continue, --model, --dangerously-skip-permissions — anything." data-zh="所有参数直接传递给 Claude Code。--continue、--model、--dangerously-skip-permissions — 随意。">All flags go straight to Claude Code. --continue, --model, --dangerously-skip-permissions — anything.</p>
+      </div>
+    </div>
+
+    <div class="features-magazine-alt">
+      <div class="feature-block reveal">
+        <div class="feature-num">04</div>
+        <h3 data-en="Dual sources" data-zh="双数据源">Dual sources</h3>
+        <p data-en="Reads from CC Switch database and its own config file. Merged view, no lock-in to either system." data-zh="同时读取 CC Switch 数据库和自有配置文件。合并展示，不锁定任何系统。">Reads from CC Switch database and its own config file. Merged view, no lock-in to either system.</p>
+      </div>
+      <div class="feature-block big reveal reveal-delay-1">
+        <div>
+          <div class="feature-num">06</div>
+          <h3 data-en="Cross platform" data-zh="跨平台">Cross platform</h3>
+          <p data-en="macOS, Linux, Windows. No native dependencies — just Node.js. Works wherever Claude Code runs." data-zh="macOS、Linux、Windows。无原生依赖，只需 Node.js。Claude Code 能运行的地方就能用。">macOS, Linux, Windows. No native dependencies — just Node.js. Works wherever Claude Code runs.</p>
+        </div>
+      </div>
+      <div class="feature-block reveal reveal-delay-2">
+        <div class="feature-num">05</div>
+        <h3 data-en="Zero pollution" data-zh="零污染">Zero pollution</h3>
+        <p data-en="Never modifies your global ~/.claude/settings.json. Your hooks, plugins, and permissions are preserved." data-zh="绝不修改全局 ~/.claude/settings.json。你的 hooks、插件和权限配置完全保留。">Never modifies your global ~/.claude/settings.json. Your hooks, plugins, and permissions are preserved.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider page">
+
+<!-- ── How it works ── -->
+<section class="how-section" id="how">
+  <div class="page">
+    <h2 class="how-title reveal" data-en="How it works" data-zh="工作原理">How it works</h2>
+    <div class="how-steps">
+      <div class="how-step reveal">
+        <div class="how-step-num">1</div>
+        <h3 data-en="Pick a provider" data-zh="选择服务商">Pick a provider</h3>
+        <p data-en="Run cswap and pick from the list, or use --provider to choose directly." data-zh="运行 cswap 从列表中选择，或用 --provider 直接指定。">Run cswap and pick from the list, or use --provider to choose directly.</p>
+      </div>
+      <div class="how-step reveal reveal-delay-1">
+        <div class="how-step-num">2</div>
+        <h3 data-en="Settings generated" data-zh="生成配置">Settings generated</h3>
+        <p data-en="A settings file is generated with your provider's config. Your hooks and plugins carry over from global settings." data-zh="生成包含服务商配置的 settings 文件。hooks 和插件从全局设置中继承。">A settings file is generated with your provider's config. Your hooks and plugins carry over from global settings.</p>
+      </div>
+      <div class="how-step reveal reveal-delay-2">
+        <div class="how-step-num">3</div>
+        <h3 data-en="Claude launches" data-zh="启动 Claude">Claude launches</h3>
+        <p data-en="Claude Code launches with the generated settings. cswap exits and gets out of the way." data-zh="Claude Code 使用生成的配置启动。cswap 退出，不干扰后续使用。">Claude Code launches with the generated settings. cswap exits and gets out of the way.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider page">
+
+<!-- ── Install ── -->
+<section class="install-section" id="install">
+  <div class="page">
+    <h2 class="reveal" data-en="Install cswap" data-zh="安装 cswap">Install cswap</h2>
+    <div class="reveal">
+      <div class="install-cmd" onclick="copyInstall(this)">
+        <span class="dollar">$</span>npm install -g cswap
+        <span class="copied" data-en="copied" data-zh="已复制">copied</span>
+      </div>
+    </div>
+    <p class="install-note reveal" data-en="Requires Node.js ≥ 18 and &lt;a href=&quot;https://claude.ai/code&quot;&gt;Claude Code&lt;/a&gt;" data-zh="需要 Node.js ≥ 18 和 &lt;a href=&quot;https://claude.ai/code&quot;&gt;Claude Code&lt;/a&gt;">Requires Node.js ≥ 18 and <a href="https://claude.ai/code">Claude Code</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="page">
+    <p>MIT License</p>
+  </div>
+</footer>
+
+<script>
+// ── Terminal animation ──
+const providers = [
+  { num: ' 1', name: 'Anthropic', vars: ' 3 vars' },
+  { num: ' 2', name: 'AWS Bedrock', vars: ' 5 vars' },
+  { num: ' 3', name: 'GCP Vertex', vars: ' 5 vars' },
+  { num: ' 4', name: 'OpenRouter', vars: ' 4 vars' },
+  { num: ' 5', name: 'My Proxy', vars: ' 6 vars' },
+];
+
+function providerRow(num, name, vars, special) {
+  const nc = special ? 't-yellow' : 't-num';
+  const na = special ? 't-yellow' : 't-name';
+  return `<div class="tl"><span class="provider-grid"><span class="${nc}">${num}</span><span class="${na}">${name}</span><span class="t-vars">${vars}</span></span></div>`;
+}
+
+const lines = [
+  { type: 'cmd', prompt: '~  ', text: 'cswap' },
+  { type: 'empty' },
+  { type: 'html', content: '  <span class="t-accent">cswap</span>  <span class="t-dim">─  Claude Code Provider Switcher</span>' },
+  { type: 'empty' },
+  { type: 'providers' },
+  { type: 'empty' },
+  { type: 'html', content: '  <span class="t-dim">Type number or name to select  ·  + to add  ·  q to quit</span>' },
+  { type: 'empty' },
+  { type: 'input', prompt: '  ', text: '1' },
+  { type: 'empty' },
+  { type: 'html', content: '  <span class="t-check">✓</span> <span class="t-name">Anthropic</span>' },
+  { type: 'empty' },
+  { type: 'html', content: '  <span style="color:#E8E4DC;font-weight:500">Starting Claude with provider: Anthropic</span>' },
+  { type: 'empty' },
+  { type: 'banner' },
+  { type: 'empty' },
+  { type: 'html', content: '  <span class="t-dim">❯</span>' },
+];
+
+const body = document.getElementById('terminal-body');
+let idx = 0;
+
+function renderLine(line) {
+  const div = document.createElement('div');
+  div.className = 'tl';
+  if (line.type === 'empty') {
+    div.classList.add('empty');
+  } else if (line.type === 'cmd') {
+    div.innerHTML = `<span class="t-dim">${line.prompt}</span><span style="color:#E8E4DC">${line.text}</span><span class="t-cursor"></span>`;
+  } else if (line.type === 'input') {
+    div.innerHTML = `<span class="t-dim">${line.prompt}</span><span style="color:#E8E4DC">${line.text}</span><span class="t-cursor"></span>`;
+  } else if (line.type === 'providers') {
+    const rows = providers.map(p => providerRow(p.num, p.name, p.vars, false)).join('');
+    const addRow = providerRow(' +', 'Quick add', '', true);
+    div.innerHTML = `<div class="provider-box" style="margin-left:2ch">${rows}${addRow}</div>`;
+  } else if (line.type === 'banner') {
+    div.innerHTML = `<div style="display:flex;align-items:flex-start;gap:1.5ch"><div style="line-height:1;text-align:center"><span class="t-dim">▐▛███▜▌</span><br><span class="t-dim">▝▜█████▛▘</span><br><span class="t-dim">▘▘ ▝▝</span></div><div style="line-height:1.6">Claude Code v2.1.116<br><span class="t-dim">API Usage Billing</span><br>~/my-project</div></div>`;
+  } else {
+    div.innerHTML = line.content;
+  }
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function animate() {
+  if (idx >= lines.length) {
+    const c = body.querySelectorAll('.t-cursor');
+    if (c.length) c[c.length - 1].remove();
+    return;
+  }
+  const line = lines[idx];
+  const delay = line.type === 'empty' ? 80 :
+                line.type === 'cmd' ? 600 :
+                line.type === 'input' ? 500 :
+                line.type === 'providers' ? 200 : 30;
+  const prev = body.querySelector('.tl:last-child .t-cursor');
+  if (prev) prev.remove();
+  setTimeout(() => { renderLine(line); idx++; animate(); }, delay);
+}
+
+const obs = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) { obs.disconnect(); setTimeout(animate, 400); }
+}, { threshold: 0.15 });
+obs.observe(document.getElementById('terminal'));
+
+// ── Scroll reveal ──
+const revObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+// ── Copy ──
+function copyInstall(el) {
+  navigator.clipboard.writeText('npm install -g cswap').then(() => {
+    const c = el.querySelector('.copied');
+    c.style.opacity = '1';
+    setTimeout(() => { c.style.opacity = '0'; }, 2000);
+  });
+}
+
+// ── Language toggle ──
+let currentLang = 'en';
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'zh' : 'en';
+  document.getElementById('lang-btn').textContent = currentLang === 'en' ? '中文' : 'EN';
+  document.querySelectorAll('[data-' + currentLang + ']').forEach(el => {
+    const text = el.getAttribute('data-' + currentLang);
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      el.placeholder = text;
+    } else {
+      el.innerHTML = text;
+    }
+  });
+}
+</script>
+
+</body>
+</html>
