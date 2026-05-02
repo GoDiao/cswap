@@ -4,6 +4,10 @@
 
 **cswap** is a lightweight CLI that lets you pick a Claude Code provider before each session. It creates isolated settings per provider, so you can run different providers in different terminal tabs simultaneously.
 
+<p align="center">
+  <video src="assets/showcase.mp4#t=0.1" width="680" autoplay loop muted playsinline></video>
+</p>
+
 ## Why?
 
 If you use [CC Switch](https://github.com/farion1231/cc-switch) to manage multiple Claude providers, you've probably run into these problems:
@@ -16,9 +20,10 @@ cswap solves this by creating **per-session provider isolation** — each `cswap
 
 ## Features
 
+- **Full-screen selector** — arrow-key navigation, provider model, URL, and last-used time at a glance
 - **Provider isolation** — each session gets its own settings, no cross-contamination
 - **Two config sources** — reads from CC Switch database and/or its own config file (`~/.cswap.json`)
-- **Interactive selection** — pick a provider by number or name
+- **Quick add** — add new providers directly from the selector (5 steps, no config file editing)
 - **Direct mode** — `--provider` flag to skip the interactive prompt
 - **Management commands** — add, remove, list, import providers
 - **Cross-platform** — macOS, Linux, Windows
@@ -51,19 +56,24 @@ cswap --provider df --dangerously-skip-permissions --continue
 cswap
 ```
 
-Shows a numbered list of providers. Type a number or name to select:
+Full-screen selector with arrow-key navigation. Shows model, URL, and last-used time:
 
 ```
-  cswap  ─  Claude Code Provider Switcher
+  ◆  cswap  —  Claude Code Provider Switcher
 
-  ┌──────────────────────────┐
-  │  1  df                4 vars  │
-  │  2  Claude Official   3 vars  │
-  │  3  DeepSeek          4 vars  │
-  │  +  Quick add                 │
-  └──────────────────────────┘
+  ╭──────────────────────────────────────────────────────────╮
+  │     PROVIDER           MODEL                LAST         │
+  ├──────────────────────────────────────────────────────────┤
+  │  1 Claude Max         claude-sonnet-4-6    1h ago        │
+  │     api.anthropic.com                                    │
+  │··························································│
+  │  2 OpenRouter         anthropic/claude-s…  3d ago        │
+  │     openrouter.ai/api/v1                                 │
+  ├──────────────────────────────────────────────────────────┤
+  │ ＋ Quick add  add a new provider                         │
+  ╰──────────────────────────────────────────────────────────╯
 
-  Type number or name to select  ·  + to add  ·  q to quit
+  ↑↓ navigate  ·  ⏎ select  ·  q quit
 ```
 
 ### Direct Mode
