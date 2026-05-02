@@ -5,7 +5,7 @@
 **cswap** is a lightweight CLI that lets you pick a Claude Code provider before each session. It creates isolated settings per provider, so you can run different providers in different terminal tabs simultaneously.
 
 <p align="center">
-  <video src="assets/showcase.mp4#t=0.1" width="680" autoplay loop muted playsinline></video>
+  <img src="assets/showcase.gif" alt="cswap demo" width="680">
 </p>
 
 ## Why?
