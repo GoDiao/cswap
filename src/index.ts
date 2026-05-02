@@ -228,7 +228,7 @@ async function main(
   } else {
     const history = await loadHistory();
     const sortedProviders = sortByHistory(providers, history);
-    selectedProvider = selectProvider(sortedProviders);
+    selectedProvider = selectProvider(sortedProviders, history);
 
     if (selectedProvider.id === 99999) {
       await addProvider(selectedProvider.name, selectedProvider.envVars);
